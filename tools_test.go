@@ -106,50 +106,48 @@ func TestTools_UploadFiles(t *testing.T) {
 }
 
 func TestTools_UploadFile(t *testing.T) {
-	for _, e := range uploadTests {
-		pr, pw := io.Pipe()
-		writer := multipart.NewWriter(pw)
+	pr, pw := io.Pipe()
+	writer := multipart.NewWriter(pw)
 
-		go func() {
-			defer writer.Close()
+	go func() {
+		defer writer.Close()
 
-			part, err := writer.CreateFormFile("file", "./testdata/test.png")
-			if err != nil {
-				t.Errorf("CreateFormFile() error = %v; want nil", err)
-			}
-
-			f, err := os.Open("./testdata/test.png")
-
-			if err != nil {
-				t.Errorf("os.Open() error = %v; want nil", err)
-			}
-			defer f.Close()
-
-			img, _, err := image.Decode(f)
-			if err != nil {
-				t.Errorf("image.Decode() error = %v; want nil", err)
-			}
-
-			err = png.Encode(part, img)
-			if err != nil {
-				t.Errorf("png.Encode() error = %v; want nil", err)
-			}
-		}()
-
-		request := httptest.NewRequest("POST", "/", pr)
-		request.Header.Add("Content-Type", writer.FormDataContentType())
-
-		var testTools Tools
-
-		uploadedFiles, err := testTools.UploadOneFile(request, "./testdata/uploads/", true)
+		part, err := writer.CreateFormFile("file", "./testdata/test.png")
 		if err != nil {
-			t.Error(err)
+			t.Errorf("CreateFormFile() error = %v; want nil", err)
 		}
 
-		if _, err := os.Stat(fmt.Sprintf("./testdata/uploads/%s", uploadedFiles.NewFileName)); os.IsNotExist(err) {
-			t.Errorf("expected file to exist: %s", err.Error())
+		f, err := os.Open("./testdata/test.png")
+
+		if err != nil {
+			t.Errorf("os.Open() error = %v; want nil", err)
+		}
+		defer f.Close()
+
+		img, _, err := image.Decode(f)
+		if err != nil {
+			t.Errorf("image.Decode() error = %v; want nil", err)
 		}
 
-		_ = os.Remove(fmt.Sprintf("./testdata/uploads/%s", uploadedFiles.NewFileName))
+		err = png.Encode(part, img)
+		if err != nil {
+			t.Errorf("png.Encode() error = %v; want nil", err)
+		}
+	}()
+
+	request := httptest.NewRequest("POST", "/", pr)
+	request.Header.Add("Content-Type", writer.FormDataContentType())
+
+	var testTools Tools
+
+	uploadedFiles, err := testTools.UploadOneFile(request, "./testdata/uploads/", true)
+	if err != nil {
+		t.Error(err)
 	}
+
+	if _, err := os.Stat(fmt.Sprintf("./testdata/uploads/%s", uploadedFiles.NewFileName)); os.IsNotExist(err) {
+		t.Errorf("expected file to exist: %s", err.Error())
+	}
+
+	_ = os.Remove(fmt.Sprintf("./testdata/uploads/%s", uploadedFiles.NewFileName))
 }
