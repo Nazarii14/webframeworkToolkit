@@ -176,3 +176,11 @@ func (t *Tools) Slugify(s string) (string, error) {
 	}
 	return slug, nil
 }
+
+// DownloadStaticFile downloads a file and tries to force the browser to avoid displaying it
+func (t *Tools) DownloadStaticFile(w http.ResponseWriter, r *http.Request, filePath string, file, displayName string) {
+	fp := filepath.Join(filePath, file)
+	w.Header().Set("Content-Disposition", fmt.Sprintf("attachment; filename=\"%s\"", displayName))
+
+	http.ServeFile(w, r, fp)
+}

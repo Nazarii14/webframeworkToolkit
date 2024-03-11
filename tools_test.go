@@ -6,6 +6,7 @@ import (
 	"image/png"
 	"io"
 	"mime/multipart"
+	"net/http"
 	"net/http/httptest"
 	"os"
 	"sync"
@@ -191,5 +192,19 @@ func TestTools_Slugify(t *testing.T) {
 		if !e.errorExpected && s != e.expected {
 			t.Errorf("expected %s; got %s", e.expected, s)
 		}
+	}
+}
+
+func TestTools_DownloadStaticFile(t *testing.T) {
+	rr := httptest.NewRecorder()
+	req, _ := http.NewRequest("GET", "/", nil)
+
+	var testTool Tools
+	testTool.DownloadStaticFile(rr, req, "./testdata", "pic.jpg", "pic1.jpg")
+	res := rr.Result()
+	defer res.Body.Close()
+
+	if res.Header["Content-Length"][0] != "100" {
+		t.Error("wrong content length of", res.Header["Content-Length"][0])
 	}
 }
